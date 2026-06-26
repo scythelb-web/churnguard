@@ -282,8 +282,20 @@ async def stripe_connect_save(request: Request, api_key: str = Form(...)):
             status_code=400,
         )
 
-    # Retrieve account info
-    acct = stripe_lib.Account.retrieve(api_key=api_key)
+    # Retrieve account info via direct HTTP call (bypasses stripe library api_key issues)
+    import httpx
+    resp = httpx.get(
+        "https://api.stripe.com/v1/account",
+        auth=(api_key, ""),
+        timeout=10,
+    )
+    if resp.status_code != 200:
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(
+            '<p style="color:red">Could not verify your Stripe account. Please try again.</p><a href="/stripe/connect">Try again</a>',
+            status_code=400,
+        )
+    acct = resp.json()
     stripe_account_id = acct.get("id", "")
 
     with get_db() as db:

@@ -1,15 +1,20 @@
 """Stripe integration — direct API key management and connected account operations."""
 import stripe
+import httpx
 from app.config import STRIPE_SECRET_KEY, BASE_URL
 
 stripe.api_key = STRIPE_SECRET_KEY
 
 
 def validate_stripe_key(api_key: str) -> bool:
-    """Test whether a given Stripe secret key is valid."""
+    """Test whether a given Stripe secret key is valid via direct API call."""
     try:
-        stripe.Account.retrieve(api_key=api_key)
-        return True
+        resp = httpx.get(
+            "https://api.stripe.com/v1/account",
+            auth=(api_key, ""),
+            timeout=10,
+        )
+        return resp.status_code == 200
     except Exception:
         return False
 
