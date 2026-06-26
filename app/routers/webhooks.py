@@ -2,8 +2,9 @@
 
 import json
 import logging
+import stripe as stripe_lib
 from datetime import datetime, timezone
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Form
 from jinja2 import Template
 
 from app.database import get_db
@@ -243,41 +244,69 @@ async def handle_payment_succeeded(invoice: dict):
 
 
 @router.get("/connect")
-async def stripe_connect(request: Request):
-    """Initiate Stripe Connect OAuth flow."""
+async def stripe_connect_page(request: Request):
+    """Show API key entry page."""
     from app.routers.auth import get_current_user
-    from app.services.stripe import get_connect_oauth_url
+    user = get_current_user(request)
+    if not user:
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse("/auth/login", status_code=303)
+
+    return request.app.state.templates.TemplateResponse(
+        "connect.html", {"request": request, "user": user}
+    )
+
+
+@router.post("/connect")
+async def stripe_connect_save(request: Request, api_key: str = Form(...)):
+    """Save and validate a Stripe API key."""
+    from app.routers.auth import get_current_user
+    from app.services.stripe import validate_stripe_key
 
     user = get_current_user(request)
     if not user:
         from fastapi.responses import RedirectResponse
         return RedirectResponse("/auth/login", status_code=303)
 
-    url = get_connect_oauth_url(user["id"])
-    from fastapi.responses import RedirectResponse
-    return RedirectResponse(url, status_code=303)
+    if not api_key.startswith("sk_"):
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(
+            '<p style="color:red">Invalid key — must start with sk_</p><a href="/stripe/connect">Try again</a>',
+            status_code=400,
+        )
 
+    if not validate_stripe_key(api_key):
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(
+            '<p style="color:red">Invalid Stripe key — please double-check and try again.</p><a href="/stripe/connect">Try again</a>',
+            status_code=400,
+        )
 
-@router.get("/connect/callback")
-async def stripe_connect_callback(request: Request, code: str, state: str):
-    """Handle Stripe Connect OAuth callback."""
-    from app.services.stripe import handle_connect_callback
-
-    user_id = int(state)
-    data = handle_connect_callback(code)
+    # Retrieve account info
+    acct = stripe_lib.Account.retrieve(api_key=api_key)
+    stripe_account_id = acct.get("id", "")
 
     with get_db() as db:
         db.execute(
             """INSERT OR REPLACE INTO customer_stripe_accounts
-               (user_id, stripe_account_id, access_token, refresh_token)
-               VALUES (?, ?, ?, ?)""",
-            (user_id, data["stripe_account_id"], data["access_token"],
-             data.get("refresh_token")),
+               (user_id, stripe_account_id, access_token)
+               VALUES (?, ?, ?)""",
+            (user["id"], stripe_account_id, api_key),
         )
         db.execute(
             "UPDATE users SET stripe_account_id = ?, stripe_connect_active = 1 WHERE id = ?",
-            (data["stripe_account_id"], user_id),
+            (stripe_account_id, user["id"]),
         )
+
+    # Auto-register webhook endpoint on user's Stripe account
+    try:
+        stripe_lib.WebhookEndpoint.create(
+            url=f"{BASE_URL}/stripe/webhook",
+            enabled_events=["invoice.payment_failed"],
+            api_key=api_key,
+        )
+    except Exception:
+        pass  # webhook may already exist or permissions issue
 
     from fastapi.responses import RedirectResponse
     return RedirectResponse("/dashboard?connected=1", status_code=303)

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect Stripe — ChurnGuard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .box { background: #fff; padding: 40px; border: 1px solid #e5e7eb; border-radius: 12px; width: 100%; max-width: 480px; }
+    .box h1 { font-size: 1.5em; margin-bottom: 8px; }
+    .box .sub { color: #6b7280; margin-bottom: 24px; font-size: 0.95em; }
+    label { display: block; font-size: 0.9em; font-weight: 600; margin-bottom: 4px; color: #374151; }
+    input { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1em; margin-bottom: 16px; font-family: monospace; }
+    button { width: 100%; padding: 12px; background: #4f46e5; color: #fff; border: none; border-radius: 6px; font-size: 1.05em; font-weight: 600; cursor: pointer; }
+    button:hover { background: #4338ca; }
+    .help { margin-top: 16px; font-size: 0.85em; color: #9ca3af; }
+    .help a { color: #4f46e5; }
+    .note { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 12px; margin-bottom: 20px; font-size: 0.9em; }
+    .back { text-align: center; margin-top: 16px; }
+    .back a { color: #6b7280; text-decoration: none; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Connect your Stripe account</h1>
+    <p class="sub">Enter your Stripe secret key to enable payment recovery monitoring.</p>
+
+    <div class="note">
+      Find your key at <strong>Stripe Dashboard → Developers → API keys</strong>.<br>
+      Use your <strong>test secret key</strong> (starts with <code>sk_test_</code>) for testing.
+    </div>
+
+    <form method="POST">
+      <label>Stripe Secret Key</label>
+      <input type="text" name="api_key" placeholder="sk_live_... or sk_test_..." required autofocus>
+      <button type="submit">Connect Stripe</button>
+    </form>
+
+    <div class="help">
+      Your key is encrypted at rest and only used to monitor failed payments and trigger recovery sequences. We never charge your account.
+    </div>
+    <div class="back"><a href="/dashboard">← Back to dashboard</a></div>
+  </div>
+</body>
+</html>
