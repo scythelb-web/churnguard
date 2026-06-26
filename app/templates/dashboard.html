@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — ChurnGuard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; color: #1f2937; }
+    nav { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+    nav .logo { font-size: 1.3em; font-weight: 800; color: #4f46e5; }
+    nav a { color: #6b7280; text-decoration: none; margin-left: 16px; }
+    .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+    .alert { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+    .alert a { color: #4f46e5; font-weight: 600; }
+    .alert.success { background: #d1fae5; border-color: #10b981; }
+    h2 { margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; }
+    .card .label { color: #6b7280; font-size: 0.85em; margin-bottom: 4px; }
+    .card .value { font-size: 1.8em; font-weight: 700; }
+    .card .value.green { color: #10b981; }
+    .card .value.red { color: #ef4444; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    th { background: #f9fafb; font-size: 0.85em; color: #6b7280; text-transform: uppercase; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 600; }
+    .badge.pending { background: #fef3c7; color: #92400e; }
+    .badge.recovered { background: #d1fae5; color: #065f46; }
+    .badge.lost { background: #fee2e2; color: #991b1b; }
+    .empty { text-align: center; padding: 48px; color: #9ca3af; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">ChurnGuard</div>
+    <div>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/billing/upgrade">Billing</a>
+      <a href="/auth/logout">Logout</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    {% if request.query_params.get('connected') %}
+    <div class="alert success">
+      Stripe account connected! We're now monitoring your payments in real-time.
+    </div>
+    {% endif %}
+
+    {% if not stripe_connected %}
+    <div class="alert">
+      Connect your Stripe account to start recovering failed payments.
+      <a href="/stripe/connect">Connect Stripe →</a>
+    </div>
+    {% endif %}
+
+    <h2>Recovery Dashboard</h2>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Active Failures</div>
+        <div class="value {% if active_failures %}red{% endif %}">{{ active_failures }}</div>
+      </div>
+      <div class="card">
+        <div class="label">Recovery Rate</div>
+        <div class="value green">{{ recovery_rate }}%</div>
+      </div>
+      <div class="card">
+        <div class="label">Revenue Recovered</div>
+        <div class="value green">${{ "%.2f"|format(all_time.amount_recovered / 100) }}</div>
+      </div>
+      <div class="card">
+        <div class="label">This Month</div>
+        <div class="value">${{ "%.2f"|format(month_stats.total_amount_recovered / 100) }}</div>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom:12px">Recent Activity</h3>
+    {% if recent %}
+    <table>
+      <thead>
+        <tr>
+          <th>Invoice</th><th>Amount</th><th>Decline</th>
+          <th>Attempts</th><th>Last Contact</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in recent %}
+        <tr>
+          <td style="font-family:monospace;font-size:0.85em">{{ r.stripe_invoice_id[:16] }}...</td>
+          <td>${{ "%.2f"|format(r.amount / 100) }}</td>
+          <td>{{ r.decline_code or '—' }}</td>
+          <td>{{ r.attempt_count }}</td>
+          <td>{{ r.last_contact or '—' }}</td>
+          <td><span class="badge {{ r.status }}">{{ r.status }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+      No failed payments yet. Once you connect Stripe, activity will appear here.
+    </div>
+    {% endif %}
+  </div>
+</body>
+</html>

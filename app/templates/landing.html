@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChurnGuard — Recover Failed Subscription Payments</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1f2937; }
+    nav { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+    nav .logo { font-size: 1.5em; font-weight: 800; color: #4f46e5; }
+    nav a { color: #4f46e5; text-decoration: none; margin-left: 20px; font-weight: 500; }
+    .hero { text-align: center; padding: 100px 24px 60px; max-width: 720px; margin: 0 auto; }
+    .hero h1 { font-size: 3em; font-weight: 800; line-height: 1.15; margin-bottom: 20px; }
+    .hero h1 span { color: #4f46e5; }
+    .hero p { font-size: 1.25em; color: #6b7280; margin-bottom: 32px; }
+    .cta { display: inline-block; padding: 14px 32px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; }
+    .cta:hover { background: #4338ca; }
+    .stats { display: flex; justify-content: center; gap: 48px; padding: 60px 24px; background: #f9fafb; }
+    .stat { text-align: center; }
+    .stat .num { font-size: 2.5em; font-weight: 800; color: #4f46e5; }
+    .stat .label { color: #6b7280; font-size: 0.95em; }
+    .how { padding: 80px 24px; max-width: 960px; margin: 0 auto; }
+    .how h2 { text-align: center; font-size: 2em; margin-bottom: 48px; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .step { text-align: center; padding: 32px 20px; border: 1px solid #e5e7eb; border-radius: 12px; }
+    .step .icon { font-size: 2.5em; margin-bottom: 16px; }
+    .step h3 { margin-bottom: 12px; }
+    .step p { color: #6b7280; font-size: 0.95em; }
+    .pricing { padding: 80px 24px; background: #f9fafb; text-align: center; }
+    .pricing h2 { font-size: 2em; margin-bottom: 48px; }
+    .cards { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; max-width: 960px; margin: 0 auto; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px; width: 280px; text-align: center; }
+    .card.recommended { border-color: #4f46e5; border-width: 2px; position: relative; }
+    .card.recommended::before { content: "Most Popular"; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #4f46e5; color: #fff; padding: 4px 16px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
+    .card .price { font-size: 2.5em; font-weight: 800; margin: 16px 0; }
+    .card .price span { font-size: 0.4em; color: #6b7280; }
+    .card .limit { color: #6b7280; margin-bottom: 24px; font-size: 0.9em; }
+    .card .cta { display: block; }
+    .footer { text-align: center; padding: 40px 24px; color: #9ca3af; font-size: 0.9em; }
+    @media (max-width: 768px) { .steps { grid-template-columns: 1fr; } .hero h1 { font-size: 2em; } }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">ChurnGuard</div>
+    <div>
+      <a href="/auth/login">Login</a>
+      <a href="/auth/signup">Sign Up</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <h1>Recover <span>20-30% more</span> failed subscription payments</h1>
+    <p>ChurnGuard layers intelligent multi-channel dunning on top of Stripe's Smart Retries. Connect in 60 seconds. Recover revenue while you sleep.</p>
+    <a href="/auth/signup" class="cta">Start Recovering Revenue — Free Trial</a>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><div class="num">9%</div><div class="label">of MRR lost to failed payments</div></div>
+    <div class="stat"><div class="num">47%</div><div class="label">industry average recovery</div></div>
+    <div class="stat"><div class="num">73%</div><div class="label">ChurnGuard average recovery</div></div>
+  </section>
+
+  <section class="how">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="icon">🔌</div>
+        <h3>Connect Stripe</h3>
+        <p>One-click OAuth. We watch your Stripe account for failed payments in real-time.</p>
+      </div>
+      <div class="step">
+        <div class="icon">📧</div>
+        <h3>Smart Dunning</h3>
+        <p>Multi-channel recovery sequence — email + SMS — with timing proven to convert.</p>
+      </div>
+      <div class="step">
+        <div class="icon">📊</div>
+        <h3>Watch Revenue Recover</h3>
+        <p>Dashboard shows every dollar recovered. Watch your churn rate drop.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing">
+    <h2>Simple, transparent pricing</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>Starter</h3>
+        <div class="price">$49<span>/mo</span></div>
+        <div class="limit">Up to $5K MRR managed</div>
+        <a href="/auth/signup" class="cta">Start Free Trial</a>
+      </div>
+      <div class="card recommended">
+        <h3>Growth</h3>
+        <div class="price">$99<span>/mo</span></div>
+        <div class="limit">Up to $25K MRR managed</div>
+        <a href="/auth/signup" class="cta">Start Free Trial</a>
+      </div>
+      <div class="card">
+        <h3>Scale</h3>
+        <div class="price">$249<span>/mo</span></div>
+        <div class="limit">Up to $100K MRR managed</div>
+        <a href="/auth/signup" class="cta">Start Free Trial</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    ChurnGuard — Built for SaaS businesses that want to stop leaving money on the table.
+  </footer>
+</body>
+</html>
