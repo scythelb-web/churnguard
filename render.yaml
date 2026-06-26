@@ -10,6 +10,7 @@ services:
       - key: DATABASE_URL
         value: sqlite:///./churnguard.db
       - key: BASE_URL
-        value: https://churnguard.onrender.com
+        value: https://churnguard-8kq8.onrender.com
       - key: PYTHON_VERSION
         value: 3.12.3
+    healthCheckPath: /health
