@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: churnguard
+    runtime: python
+    buildCommand: pip install -r requirements.txt && pip install 'bcrypt<5'
+    startCommand: python3 init_db.py && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///./churnguard.db
+      - key: BASE_URL
+        value: https://churnguard.onrender.com
+      - key: PYTHON_VERSION
+        value: 3.12.3
