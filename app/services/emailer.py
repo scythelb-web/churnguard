@@ -29,7 +29,7 @@ def send_dunning_email(
         return False
 
     message = Mail(
-        from_email=From("billing@churnguard.io", "ChurnGuard Billing"),
+        from_email=From("scythelb@gmail.com", "ChurnGuard Billing"),
         to_emails=To(to_email, to_name),
         subject=Subject(subject),
         html_content=HtmlContent(body_html),

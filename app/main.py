@@ -56,7 +56,7 @@ async def test_email(to_email: str | None = None):
         return {"status": "error", "message": "SendGrid API key not configured",
                 "debug": {"env_var_set": key_present, "config_read": bool(SENDGRID_API_KEY)}}
     
-    target = to_email or ADMIN_EMAIL
+    target = to_email or "scythelb@gmail.com"
     result = send_dunning_email(
         to_email=target,
         to_name="ChurnGuard User",
