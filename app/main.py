@@ -50,8 +50,11 @@ async def health():
 @app.post("/test-email")
 async def test_email(to_email: str | None = None):
     """Send a test email to verify SendGrid is configured."""
+    import os
+    key_present = bool(os.getenv("SENDGRID_API_KEY", ""))
     if not SENDGRID_API_KEY:
-        return {"status": "error", "message": "SendGrid API key not configured"}
+        return {"status": "error", "message": "SendGrid API key not configured",
+                "debug": {"env_var_set": key_present, "config_read": bool(SENDGRID_API_KEY)}}
     
     target = to_email or ADMIN_EMAIL
     result = send_dunning_email(
