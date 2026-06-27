@@ -5,8 +5,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
+from app.config import SENDGRID_API_KEY, ADMIN_EMAIL
 from app.database import init_db
 from app.routers import auth, webhooks, dashboard, billing
+from app.services.emailer import send_dunning_email
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -43,3 +45,27 @@ async def landing(request: Request):
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "ChurnGuard"}
+
+
+@app.post("/test-email")
+async def test_email(to_email: str | None = None):
+    """Send a test email to verify SendGrid is configured."""
+    if not SENDGRID_API_KEY:
+        return {"status": "error", "message": "SendGrid API key not configured"}
+    
+    target = to_email or ADMIN_EMAIL
+    result = send_dunning_email(
+        to_email=target,
+        to_name="ChurnGuard User",
+        subject="ChurnGuard Email Test — It Works!",
+        body_html="""
+        <h2>Your ChurnGuard dunning emails are configured!</h2>
+        <p>This confirms that SendGrid is wired up and sending correctly.</p>
+        <p>Your customers will now receive dunning emails when their payments fail.</p>
+        <br>
+        <p style="color: #888; font-size: 12px;">
+            Sent from ChurnGuard — subscription payment recovery
+        </p>
+        """
+    )
+    return {"status": "ok" if result else "error", "sent": result, "to": target}
