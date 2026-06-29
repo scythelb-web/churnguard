@@ -10,3 +10,4 @@ passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
 httpx==0.27.2
 apscheduler==3.10.4
+libsql-experimental==0.0.55

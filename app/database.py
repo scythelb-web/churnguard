@@ -1,13 +1,40 @@
+import os
 import sqlite3
 from pathlib import Path
 from contextlib import contextmanager
 
 DB_PATH = Path(__file__).resolve().parent.parent / "churnguard.db"
 
+# Turso (libsql) support — persistent SQLite on the edge
+# Set TURSO_DATABASE_URL + TURSO_AUTH_TOKEN to use Turso instead of local SQLite
+TURSO_URL = os.getenv("TURSO_DATABASE_URL", "")
+TURSO_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
+
+_use_turso = bool(TURSO_URL and TURSO_TOKEN)
+
+if _use_turso:
+    try:
+        import libsql_experimental as libsql
+        _turso_available = True
+    except ImportError:
+        _turso_available = False
+
+
+def _connect():
+    """Return a database connection — Turso if configured, else local SQLite."""
+    if _use_turso and _turso_available:
+        conn = libsql.connect(TURSO_URL, auth_token=TURSO_TOKEN)
+        conn.row_factory = sqlite3.Row
+        return conn
+    else:
+        conn = sqlite3.connect(str(DB_PATH))
+        conn.row_factory = sqlite3.Row
+        return conn
+
+
 @contextmanager
 def get_db():
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row
+    conn = _connect()
     try:
         yield conn
         conn.commit()
@@ -16,6 +43,7 @@ def get_db():
         raise
     finally:
         conn.close()
+
 
 def init_db():
     with get_db() as db:

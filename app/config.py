@@ -5,6 +5,8 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-in-production")
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./churnguard.db")
+TURSO_DATABASE_URL = os.getenv("TURSO_DATABASE_URL", "")
+TURSO_AUTH_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_CONNECT_CLIENT_ID = os.getenv("STRIPE_CONNECT_CLIENT_ID", "")
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
