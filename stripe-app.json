@@ -1,0 +1,46 @@
+{
+  "id": "com.churnguard.recovery",
+  "version": "0.1.0",
+  "name": "ChurnGuard",
+  "icon": "./churnguard_icon_300.png",
+  "sandbox_install_compatible": true,
+  "distribution_type": "public",
+  "stripe_api_access_type": "oauth",
+  "allowed_redirect_uris": [
+    "https://churnguard-8kq8.onrender.com/stripe/oauth/callback"
+  ],
+  "permissions": [
+    {
+      "permission": "event_read",
+      "purpose": "Detects failed invoice payments so ChurnGuard can start smart dunning recovery campaigns."
+    },
+    {
+      "permission": "invoice_read",
+      "purpose": "Reads invoice details to determine payment amount, customer, and decline reason."
+    },
+    {
+      "permission": "customer_read",
+      "purpose": "Retrieves customer name and email to send personalized dunning emails."
+    },
+    {
+      "permission": "payment_intent_read",
+      "purpose": "Gets decline codes to tailor the recovery strategy for each failed payment."
+    },
+    {
+      "permission": "subscription_read",
+      "purpose": "Reads subscription status to determine if a failed payment is for an active subscriber."
+    },
+    {
+      "permission": "webhook_endpoint_write",
+      "purpose": "Registers a webhook endpoint so ChurnGuard receives real-time payment failure events."
+    }
+  ],
+  "ui_extension": [],
+  "post_install_action": {
+    "type": "external",
+    "url": "https://churnguard-8kq8.onrender.com/dashboard"
+  },
+  "constants": {
+    "APP_BASE_URL": "https://churnguard-8kq8.onrender.com"
+  }
+}

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from app.config import SENDGRID_API_KEY, ADMIN_EMAIL
 from app.database import init_db
-from app.routers import auth, webhooks, dashboard, billing
+from app.routers import auth, webhooks, dashboard, billing, oauth
 from app.services.emailer import send_dunning_email
 
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +29,7 @@ app.include_router(auth.router)
 app.include_router(webhooks.router)
 app.include_router(dashboard.router)
 app.include_router(billing.router)
+app.include_router(oauth.router)
 
 
 @app.on_event("startup")
