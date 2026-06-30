@@ -48,6 +48,16 @@ async def health():
     return {"status": "ok", "service": "ChurnGuard"}
 
 
+@app.get("/debug/db")
+async def debug_db():
+    from app.database import _use_turso, _turso_available, TURSO_URL
+    return {
+        "turso_enabled": _use_turso,
+        "turso_module": _turso_available,
+        "turso_url": TURSO_URL[:50] + "..." if TURSO_URL else "not set",
+    }
+
+
 @app.post("/test-email")
 async def test_email(to_email: str | None = None):
     """Send a test email to verify SendGrid is configured."""
