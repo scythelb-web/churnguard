@@ -48,6 +48,16 @@ async def health():
     return {"status": "ok", "service": "ChurnGuard"}
 
 
+@app.get("/dl/ph-gallery")
+async def download_ph_gallery():
+    from fastapi.responses import FileResponse
+    import os
+    path = Path(__file__).resolve().parent.parent / "ph-gallery.tar.gz"
+    if not path.exists():
+        return {"error": "file not found"}
+    return FileResponse(str(path), filename="ph-gallery.tar.gz", media_type="application/gzip")
+
+
 @app.get("/debug/db")
 async def debug_db():
     import os
