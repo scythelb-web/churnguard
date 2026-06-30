@@ -5,9 +5,17 @@ from contextlib import contextmanager
 
 DB_PATH = Path(__file__).resolve().parent.parent / "churnguard.db"
 
-# Turso (libsql) support — persistent SQLite on the edge
+# Turso (libsql) support
 TURSO_URL = os.getenv("TURSO_DATABASE_URL", "")
 TURSO_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
+
+# Fallback: read from local config files (for Render)
+if not TURSO_URL or not TURSO_TOKEN:
+    _token_file = Path(__file__).resolve().parent.parent / ".turso_token"
+    _url_file = Path(__file__).resolve().parent.parent / ".turso_url"
+    if _url_file.exists() and _token_file.exists():
+        TURSO_URL = _url_file.read_text().strip()
+        TURSO_TOKEN = _token_file.read_text().strip()
 
 _use_turso = bool(TURSO_URL and TURSO_TOKEN)
 
@@ -20,7 +28,6 @@ if _use_turso:
 
 
 class RowDict:
-    """Make a tuple look like sqlite3.Row for dict() and [] access."""
     def __init__(self, row, columns):
         self._row = row
         self._cols = columns
@@ -45,11 +52,8 @@ class RowDict:
 
 
 class TursoWrapper:
-    """Wraps a libsql Connection to look like sqlite3.Connection with Row support."""
-
     def __init__(self, conn):
         self._conn = conn
-        self._last_columns = []
 
     def execute(self, sql, params=None):
         cur = self._conn.cursor()
@@ -73,8 +77,6 @@ class TursoWrapper:
 
 
 class TursoCursor:
-    """Wraps libsql Cursor to return RowDict objects."""
-
     def __init__(self, cursor, description):
         self._cursor = cursor
         self._columns = [d[0].lower() for d in description] if description else []
@@ -92,7 +94,6 @@ class TursoCursor:
 
 
 def _connect():
-    """Return a database connection — Turso if configured, else local SQLite."""
     if _use_turso and _turso_available:
         conn = libsql.connect(TURSO_URL, auth_token=TURSO_TOKEN)
         return TursoWrapper(conn)
