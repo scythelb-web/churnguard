@@ -6,7 +6,6 @@ from contextlib import contextmanager
 DB_PATH = Path(__file__).resolve().parent.parent / "churnguard.db"
 
 # Turso (libsql) support — persistent SQLite on the edge
-# Set TURSO_DATABASE_URL + TURSO_AUTH_TOKEN to use Turso instead of local SQLite
 TURSO_URL = os.getenv("TURSO_DATABASE_URL", "")
 TURSO_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "")
 
@@ -20,12 +19,83 @@ if _use_turso:
         _turso_available = False
 
 
+class RowDict:
+    """Make a tuple look like sqlite3.Row for dict() and [] access."""
+    def __init__(self, row, columns):
+        self._row = row
+        self._cols = columns
+        self._map = {col: val for col, val in zip(columns, row)}
+
+    def keys(self):
+        return self._cols
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._row[key]
+        return self._map[key]
+
+    def __iter__(self):
+        return iter(self._map.values())
+
+    def __contains__(self, key):
+        return key in self._map
+
+    def __repr__(self):
+        return f"RowDict({self._map})"
+
+
+class TursoWrapper:
+    """Wraps a libsql Connection to look like sqlite3.Connection with Row support."""
+
+    def __init__(self, conn):
+        self._conn = conn
+        self._last_columns = []
+
+    def execute(self, sql, params=None):
+        cur = self._conn.cursor()
+        if params:
+            cur.execute(sql, params)
+        else:
+            cur.execute(sql)
+        return TursoCursor(cur, cur.description)
+
+    def executescript(self, sql):
+        self._conn.executescript(sql)
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def close(self):
+        self._conn.close()
+
+
+class TursoCursor:
+    """Wraps libsql Cursor to return RowDict objects."""
+
+    def __init__(self, cursor, description):
+        self._cursor = cursor
+        self._columns = [d[0].lower() for d in description] if description else []
+        self.lastrowid = cursor.lastrowid if hasattr(cursor, 'lastrowid') else None
+
+    def fetchone(self):
+        row = self._cursor.fetchone()
+        if row is None:
+            return None
+        return RowDict(row, self._columns)
+
+    def fetchall(self):
+        rows = self._cursor.fetchall()
+        return [RowDict(r, self._columns) for r in rows]
+
+
 def _connect():
     """Return a database connection — Turso if configured, else local SQLite."""
     if _use_turso and _turso_available:
         conn = libsql.connect(TURSO_URL, auth_token=TURSO_TOKEN)
-        conn.row_factory = sqlite3.Row
-        return conn
+        return TursoWrapper(conn)
     else:
         conn = sqlite3.connect(str(DB_PATH))
         conn.row_factory = sqlite3.Row
