@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir 'bcrypt<5'
 # Copy app
 COPY app/ ./app/
 COPY init_db.py .
+COPY .turso_url .turso_token ./
 
 # Persistent data directory for SQLite
 RUN mkdir -p /data
