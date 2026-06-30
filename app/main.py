@@ -50,12 +50,23 @@ async def health():
 
 @app.get("/debug/db")
 async def debug_db():
-    from app.database import _use_turso, _turso_available, TURSO_URL
-    return {
-        "turso_enabled": _use_turso,
-        "turso_module": _turso_available,
-        "turso_url": TURSO_URL[:50] + "..." if TURSO_URL else "not set",
+    import os
+    from pathlib import Path
+    url_file = Path("/app/.turso_url") if os.path.exists("/app/.turso_url") else Path(__file__).resolve().parent.parent / ".turso_url"
+    token_file = Path("/app/.turso_token") if os.path.exists("/app/.turso_token") else Path(__file__).resolve().parent.parent / ".turso_token"
+    result = {
+        "turso_url_exists": url_file.exists(),
+        "turso_token_exists": token_file.exists(),
+        "turso_url_first50": url_file.read_text().strip()[:50] + "..." if url_file.exists() else "missing",
+        "cwd": os.getcwd(),
+        "files_in_root": os.listdir(".")[:20] if os.path.exists(".") else [],
     }
+    try:
+        from app.database import _use_turso
+        result["turso_enabled"] = _use_turso
+    except Exception as e:
+        result["turso_enabled"] = str(e)
+    return result
 
 
 @app.post("/test-email")
