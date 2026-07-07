@@ -125,6 +125,7 @@ def init_db():
                 password_hash TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 stripe_customer_id TEXT,
+                stripe_subscription_id TEXT,
                 plan TEXT DEFAULT 'starter',
                 stripe_account_id TEXT,
                 stripe_connect_active INTEGER DEFAULT 0
@@ -189,3 +190,9 @@ def init_db():
                 UNIQUE(user_id, month)
             );
         """)
+
+        # Add stripe_subscription_id to existing databases
+        try:
+            db.execute("ALTER TABLE users ADD COLUMN stripe_subscription_id TEXT")
+        except Exception:
+            pass

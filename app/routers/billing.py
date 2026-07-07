@@ -1,17 +1,18 @@
-"""Billing routes — for charging OUR customers."""
+"""Billing routes — Stripe Checkout for subscriptions."""
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 from app.routers.auth import get_current_user
 from app.config import STRIPE_SECRET_KEY
-from app.services.billing import create_checkout_session, create_customer
+from app.database import get_db
 
 router = APIRouter(prefix="/billing", tags=["billing"])
 
-# These would be actual Stripe Price IDs in production
+# These get replaced with real Stripe Price IDs from your dashboard
+# Create them at: https://dashboard.stripe.com/products
 PRICE_IDS = {
-    "starter": "price_starter",
-    "growth": "price_growth",
-    "scale": "price_scale",
+    "starter": "price_REPLACE_STARTER",
+    "growth": "price_REPLACE_GROWTH",
+    "scale": "price_REPLACE_SCALE",
 }
 
 
@@ -35,11 +36,37 @@ async def subscribe(request: Request, plan: str):
     if not STRIPE_SECRET_KEY:
         return {"error": "Stripe not configured"}
 
-    price_id = PRICE_IDS.get(plan, PRICE_IDS["growth"])
-    session = create_checkout_session(
-        customer_id=user["stripe_customer_id"],
-        price_id=price_id,
-        success_url=f"{request.base_url}dashboard?subscribed=1",
-        cancel_url=f"{request.base_url}billing/upgrade",
-    )
-    return RedirectResponse(session.url, status_code=303)
+    price_id = PRICE_IDS.get(plan)
+    if not price_id or "REPLACE" in price_id:
+        return {"error": f"Price ID not configured for plan: {plan}. Create it in your Stripe dashboard."}
+
+    # Ensure user has a Stripe customer ID
+    customer_id = user.get("stripe_customer_id")
+    if not customer_id:
+        try:
+            import stripe as _stripe
+            _stripe.api_key = STRIPE_SECRET_KEY
+            customer = _stripe.Customer.create(email=user["email"])
+            customer_id = customer["id"]
+            with get_db() as db:
+                db.execute(
+                    "UPDATE users SET stripe_customer_id = ? WHERE id = ?",
+                    (customer_id, user["id"]),
+                )
+        except Exception as e:
+            return {"error": f"Failed to create Stripe customer: {str(e)}"}
+
+    import stripe as _stripe
+    _stripe.api_key = STRIPE_SECRET_KEY
+
+    try:
+        session = _stripe.checkout.Session.create(
+            customer=customer_id,
+            mode="subscription",
+            line_items=[{"price": price_id, "quantity": 1}],
+            success_url=f"{request.base_url}dashboard?subscribed=1",
+            cancel_url=f"{request.base_url}billing/upgrade",
+        )
+        return RedirectResponse(session.url, status_code=303)
+    except Exception as e:
+        return {"error": f"Checkout failed: {str(e)}"}

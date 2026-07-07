@@ -44,8 +44,13 @@ async def stripe_webhook(request: Request):
         await handle_payment_succeeded(event["data"]["object"])
 
     elif event_type == "invoice.paid":
-        # Some setups fire 'invoice.paid' instead of 'invoice.payment_succeeded'
         await handle_payment_succeeded(event["data"]["object"])
+
+    elif event_type == "checkout.session.completed":
+        await handle_checkout_completed(event["data"]["object"])
+
+    elif event_type == "customer.subscription.deleted":
+        await handle_subscription_deleted(event["data"]["object"])
 
     return {"status": "ok"}
 
@@ -344,3 +349,55 @@ async def card_updated(request: Request):
       <p>Your payment has been processed. You can close this page.</p>
     </body></html>
     """)
+
+# ── Billing webhook handlers ──────────────────────────────────
+
+async def handle_checkout_completed(session: dict):
+    """When a Stripe Checkout completes, activate the user's subscription."""
+    customer_id = session.get("customer")
+    subscription_id = session.get("subscription")
+    if not customer_id or not subscription_id:
+        return
+
+    with get_db() as db:
+        user = db.execute(
+            "SELECT * FROM users WHERE stripe_customer_id = ?", (customer_id,)
+        ).fetchone()
+        if not user:
+            logger.warning("No user found for customer %s", customer_id)
+            return
+
+        # Get plan from subscription
+        try:
+            import stripe as _stripe
+            from app.config import STRIPE_SECRET_KEY
+            _stripe.api_key = STRIPE_SECRET_KEY
+            sub = _stripe.Subscription.retrieve(subscription_id)
+            price_id = sub["items"]["data"][0]["price"]["id"]
+            # Map price to plan name
+            plan = "growth"
+            for k, v in {"starter": 4900, "growth": 9900, "scale": 24900}.items():
+                if sub["items"]["data"][0]["price"].get("unit_amount") == v:
+                    plan = k
+        except Exception:
+            plan = "growth"
+
+        db.execute(
+            "UPDATE users SET stripe_subscription_id = ?, plan = ? WHERE id = ?",
+            (subscription_id, plan, user["id"]),
+        )
+        logger.info("Subscription activated: user=%s plan=%s", user["email"], plan)
+
+
+async def handle_subscription_deleted(subscription: dict):
+    """When a subscription is cancelled, downgrade the user."""
+    subscription_id = subscription.get("id")
+    if not subscription_id:
+        return
+
+    with get_db() as db:
+        db.execute(
+            "UPDATE users SET plan = 'starter', stripe_subscription_id = NULL WHERE stripe_subscription_id = ?",
+            (subscription_id,),
+        )
+        logger.info("Subscription cancelled: %s", subscription_id)

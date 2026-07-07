@@ -58,6 +58,20 @@ async def signup(
         )
         user_id = cursor.lastrowid
 
+    # Create Stripe customer
+    try:
+        import stripe as _stripe
+        from app.config import STRIPE_SECRET_KEY
+        _stripe.api_key = STRIPE_SECRET_KEY
+        customer = _stripe.Customer.create(email=email)
+        with get_db() as db:
+            db.execute(
+                "UPDATE users SET stripe_customer_id = ? WHERE id = ?",
+                (customer["id"], user_id),
+            )
+    except Exception:
+        pass  # Don't block signup if Stripe fails
+
     response = RedirectResponse("/dashboard", status_code=303)
     response.set_cookie("session", create_token(user_id), max_age=SESSION_DAYS * 86400, httponly=True)
     return response
