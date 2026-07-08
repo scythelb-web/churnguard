@@ -10,9 +10,9 @@ router = APIRouter(prefix="/billing", tags=["billing"])
 # These get replaced with real Stripe Price IDs from your dashboard
 # Create them at: https://dashboard.stripe.com/products
 PRICE_IDS = {
-    "starter": "price_REPLACE_STARTER",
-    "growth": "price_REPLACE_GROWTH",
-    "scale": "price_REPLACE_SCALE",
+    "starter": "price_1Tqiv6Ih3bqeW0wSm6qAaNtD",
+    "growth": "price_1TqivSIh3bqeW0wSvhLAfKet",
+    "scale": "price_1TqivjIh3bqeW0wSHsmQjXAp",
 }
 
 
