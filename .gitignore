@@ -21,3 +21,6 @@ Thumbs.db
 
 # Fly.io
 fly.toml
+
+# Turso / secrets
+.turso_token
